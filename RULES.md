@@ -70,3 +70,16 @@
 ## 6. Честность scope
 
 Не обещать enterprise/multi-tenant/SLA, если в коде этого нет. Portfolio MVP называется portfolio MVP.
+
+---
+
+## 7. Брендинг-чистка включает monitoring
+
+При переименовании/чистке продукта от лабораторных или чужих брендов обязательно проверить и привести к продуктовому имени:
+
+- Grafana **provisioning** (`dashboards.yml` provider name + `folder`, datasource titles при необходимости);
+- имена **папок** и **дашбордов** Grafana (title/uid/tags);
+- имена **алертов** / alert groups / contact points (без чужого продукта в title);
+- scrape `job_name` в Prometheus и соответствующие PromQL `job=` фильтры.
+
+В UI мониторинга не должно оставаться пустых папок и артефактов старого бренда (например «AI Agents Lab» у Watchdog Bot).
