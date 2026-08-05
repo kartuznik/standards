@@ -88,3 +88,64 @@ README продуктового репозитория — **техническ�
 5. **Логи:** `tavily_days` (или эквивалент) и `source_date_range=min..max`.
 
 Эталон реализации: Watchdog Bot (`agents/freshness.py`, `agents/web_search.py`, секция Freshness retrieval в README).
+
+---
+
+## 4. Self-diagnostics and Self-heal pattern (обязательный)
+
+Обязательный ops-паттерн для **всех** наших продуктов (Level 1–3). Цель: владелец узнаёт о деградации раньше пользователя, сервис умеет ожить сам, внешние API не роняют продукт молча.
+
+### 4.1 Команда `/health` или `/status`
+
+Должна возвращать краткий снимок:
+
+- БД (reachable / WAL или эквивалент);
+- Telegram API (getMe / probe);
+- диск / data volume (free space или ok/fail);
+- внешние API по факту продукта (LLM primary/secondary, search, Redis/queue и т.д.).
+
+Доступ — по RBAC продукта (обычно admin/owner). Не светить секреты и полные URL ключей.
+
+### 4.2 Фоновый `health_check_loop`
+
+- Периодический опрос (порядок минуты, конфигурируемо).
+- При деградации — **алерт владельцу в Telegram** (in-bot и/или Grafana contact point).
+- Не спамить: debounce / повтор с интервалом; логировать причину.
+
+### 4.3 Авто-рестарт при падении
+
+- Сервис должен подниматься через **systemd** (`Restart=`) и/или Docker `restart: unless-stopped` — что является стандартом деплоя продукта.
+- Критичный crash loop — алерт владельцу; не маскировать бесконечный рестарт как «всё ок».
+
+### 4.4 Graceful degradation внешних API
+
+- **LLM:** fallback OpenAI ↔ DeepSeek (или принятая пара провайдеров) при 401/402/403 / balance; метрика fallback; честный лог.
+- **Веб-поиск:** невалидный/отсутствующий ключ → soft-fail / skip search, продукт продолжает работать на допустимом режиме; пользователю — honest note, не generic crash.
+- Другие внешние зависимости — по тому же принципу: degrade, не silent wrong answer.
+
+### 4.5 Prometheus / observability
+
+- Счётчики ошибок запросов и событий самодиагностики (health fail, restart, fallback, search soft-fail).
+- Алерты на рост ошибок / очередь / LLM degrade — по канону alerting продукта.
+
+Эталон ориентира: Watchdog Bot (`health_check`, monitor loop, LLM fallback, Tavily soft-fail, Prometheus metrics).
+
+---
+
+## 5. Product complexity levels (выбор на проектировании)
+
+Чтобы не натягивать LangGraph на простой FSM-бот, фиксируем **три уровня**. Уровень выбирается на этапе проектирования и **явно указывается в README** продукта (секция «О проекте» / архитектура).
+
+| Level | Название | Архитектура | Когда выбирать | Примеры |
+|---|---|---|---|---|
+| **1** | Simple bot | FSM + роли/RBAC, **без** LangGraph | Каталог, опрос, заказ, линейные сценарии, мало «рассуждения» | ShopBot, SurveyBot |
+| **2** | Smart assistant | Single-agent: память диалога + опциональный веб-поиск, без multi-agent графа | Персональный ассистент, Q&A с памятью, лёгкий search | Kuzya |
+| **3** | Multi-agent research | LangGraph (router / researcher / writer / reviewer), ARQ/background worker, grounded search | Исследование, свежие новости, ревью качества, тяжёлые задачи | Watchdog Bot, будущие research-продукты |
+
+### Критерии выбора (кратко)
+
+- Нужны только кнопки/шаги/роли → **Level 1**.
+- Нужны память и иногда поиск, один «мозг» достаточен → **Level 2**.
+- Нужны маршрутизация сложности, заземление источников, ревьюер, фон → **Level 3**.
+
+Запрещено: тащить Level 3 в Shop/Survey «на вырост» без продуктовой необходимости. Усложнение уровня — отдельное АПРУВ-решение Архитектора.
