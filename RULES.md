@@ -154,7 +154,7 @@
 Перед удалением **любой** директории в рамках гигиены / cleanup / prune:
 
 1. Проверить, что на неё **не** ссылаются **workspace IDE** (корни Cursor/VS Code, multi-root folders, открытые worktrees).
-2. Проверить **стартовые cwd терминалов** агента и интерактивных сессий (`readlink /proc/PID/cwd`, список terminals в Cursor).
+2. Проверить **стартовые директории и текущие cwd терминалов** агента и интерактивных сессий (`readlink /proc/PID/cwd`, список terminals в Cursor).
 3. Если каталог занят как workspace root или terminal cwd — сначала перенести агент/сессию на другой корень (или воссоздать безопасный stub), и только потом удалять.
 4. Иначе риск: execution backend / terminal отваливаются, Phase cleanup обрывается mid-flight.
 
