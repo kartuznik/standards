@@ -53,6 +53,6 @@ ssh -p 22 root@<IP>
 | Свежий архив | символическая ссылка `/opt/backups/latest.tar.gz` |
 | Имя снимка | `backup_YYYYMMDD_HHMMSS.tar.gz` |
 | Ротация | архивы старше **7 дней** удаляются скриптом |
-| Timer | `backup-bot.timer` — ежедневно **03:00 UTC**, unit `backup-bot.service` |
+| Timer | `backup-bot.timer` — ежедневно **03:00 MSK**, unit `backup-bot.service` |
 
 Скрипт: `/opt/bots/backup/create_backup.sh`. Ручной запуск (на сервере): `systemctl start backup-bot.service`. Статус таймера: `systemctl status backup-bot.timer`.
