@@ -80,29 +80,16 @@ ChatGPT или Gemini. Факт, предположение и непровер�
 
 ---
 
-## Сервер (possible-magenta)
+## Сервер
 
-1 vCPU, 2 ГБ RAM, 2 ГБ swap. Провайдер aeza. SSH только через алиас `aeza`
-на порту 2222. Подключение ключом, пользователь root.
+Детали подключения, конфигурация деплоя и принятые риски доступа —
+только в локальной копии `/opt/standards/` на сервере.
 
-Текущий режим: **production** (с 6 ноября 2026).
+Текущий режим хоста и список работающих сервисов уточняй у Котелка
+или через `systemctl is-active` на сервере.
 
-Работают: shopbot, order-hunter-bot, vacancy-hunter, vacancy-hunter-run.timer,
-backup-bot.timer.
-Выключены: surveybot, botcore, kuzya, shopbot-web, watchdog (Docker).
-
-Деплой по типу сервиса:
-- **venv + systemd:** большинство ботов. pip install только при смене зависимостей,
-  затем systemctl restart.
-- **Docker Compose:** watchdog, rag-telegram-bot, content-generator-bot.
-- **Watchdog в режиме production:** docker start/stop без пересборки.
-
-Бэкап: ежедневно 03:00 MSK (OnCalendar без зоны, хост Europe/Moscow),
-ротация 7 дней, /opt/backups/latest.tar.gz.
-
-Принятый риск (Ефим, 13.11.2026): боты работают от root. У Котелка sudo на
-systemctl restart/start пяти юнитов, он в группе devs (запись в /opt/bots/*).
-Это совмещение принято осознанно.
+Принятый риск (Ефим, 13.11.2026) зафиксирован в `/opt/standards/ACCEPTANCE_LOG.md`
+и в нейтральной записи в GitHub `kartuznik/standards/ACCEPTANCE_LOG.md`.
 
 ---
 
@@ -129,23 +116,11 @@ systemctl restart/start пяти юнитов, он в группе devs (зап
 
 ## Котелок: что настроено (13.11.2026)
 
-Пользователь: `kotelok` (uid=1000).
-Группы: kotelok, users, systemd-journal, devs.
-
-sudoers (/etc/sudoers.d/kotelok-runtime):
-```
-kotelok ALL=(root) NOPASSWD: \
-  /usr/bin/systemctl restart shopbot.service, \
-  /usr/bin/systemctl restart order-hunter-bot.service, \
-  /usr/bin/systemctl restart vacancy-hunter.service, \
-  /usr/bin/systemctl start vacancy-hunter-run.service, \
-  /usr/bin/systemctl restart vacancy-hunter.timer
-```
-
-server-mode.sh НЕТ в sudoers (дыра через devs → подмена скрипта → root).
-docker группы нет (равно root).
+Детали sudoers, групп и прав доступа — только в локальной копии
+`/opt/standards/` на сервере.
 
 Для smoke в Telegram тестового аккаунта нет — Ефим отправляет команды вручную.
+Актуальный список разрешений проверяй через `sudo -l` на сервере.
 
 ---
 
